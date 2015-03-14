@@ -1,0 +1,132 @@
+---
+title: "Homework 1"
+author: "Rupantar Rana"
+date: "Tuesday, January 20, 2015"
+output: pdf_document
+---
+
+## Question 1
+### Create a numerical summary for height and age and compute the interquartile range for each
+
+```{r}
+data=read.csv("C:/Users/Rupantar/Desktop/courses in Spring USC/Data Visualization/BRFSS.csv",header=T)
+attach(data)
+summary(data$height)
+summary(data$age)
+
+```
+The interquartile range for the  height variable is **`r IQR(data$height)`** inches.
+
+The interquartile range for the  age variable is **`r IQR(data$age)`** years.
+
+## Question 2 
+
+The proportion of the population with excellent health:
+
+```{r}
+ sum(data$genhlth=="excellent")/nrow(data) 
+```
+
+## Question 3
+
+The average age(years) of the female respondents is:
+
+```{r}
+dataf<-subset(data,data$gender=="f")
+mean(dataf$age)
+```
+
+## Question 4
+Median weight(pounds) of the respondents without a health plan:
+```{r}
+median(data[data$hlthplan==0,'weight'])
+
+```
+## Question 5
+Median weight(pounds) of respondents without health insurance and who had not exercised in the last month:
+```{r}
+datax=subset(data,data$hlthplan==0 & data$exerany==0)
+median(datax$weigh)
+
+```
+
+## Question 6
+```{r}
+wdiff=wtdesire-weight
+class(wdiff)
+data<-cbind(data,wdiff)
+```
+The variable wdiff is of class integer and has the unit of weight (pounds).
+
+If the value of the wdiff variable is 0, it means that the person's desired weight is equal to the actual weitht.
+
+If the value of wdiff is positive , it means that the weight desired by the person is higher than the actual weight ,whereas if the wdiff value is negative it means that the weight desired by the person is lower that the actual weight of the person.
+
+## Question 7 
+
+```{r}
+hist(wdiff,breaks=60,col='grey50')
+boxplot(wdiff)
+summary(wdiff)
+sd(wdiff)
+
+```
+From the above histogram we can see that the distribution of the wtdiff variable is normal. The variable is centered on the negative side of zero around its mean of -14.59 lbs. The shape of the distribution is slightly left skewed.The histogram for wdiff is narrow with a standard deviation of 24.04.
+
+This plot tells us that on an average people desire to have a weight that is lower than their actual weight.
+
+```{r}
+
+plot(weight,wdiff)
+```
+
+We can observe a negative linear trend between the weight and the wtdiff variables.This plot shows that the value of wdiff becomes more negative for people who weigh more. This implies that people who weight more on an average tend to desire lower weight than their actual weight.
+
+##Question 8  
+
+```{r}
+boxplot(weight~gender)
+boxplot(wdiff~gender)
+summary(data[gender=='m',]$wdiff)
+summary(data[gender=='f',]$wdiff)
+```
+We know that men tend to weight more than  women and this fact can be observed from the first boxplot. 
+From the summary data and the second boxplot we can observe that on an average, the difference between the desired weight and the actual weight for men is higher than that for women. We could interpret that on an average, men want to lose more weight than women.
+
+## Question 9 
+
+```{r}
+mean(weight)
+sd(weight)
+
+```
+The proportion of people within one standard of the mean weight:
+
+```{r}
+
+sum(abs(weight-mean(weight))<sd(weight))/nrow(data)
+
+```
+
+## Question 10
+
+Let us calculate the BMI for our data set and find the number of people who are obese. Finally let us examine how obesity may be related to health for our data set.
+
+```{r}
+data$bmi=(weight/height^2)*703 # creating the bmi variable 
+hist(data$bmi)
+summary(data$bmi)
+obese<-factor(ifelse(data$bmi>30,1,0)) # creating the obese variable
+class(obese)
+table(obese)/nrow(data) # Creating a relative frequency plot
+data<-cbind(data,obese)  # Combining the obese variable in the data set
+general_health=factor(genhlth,levels = c("excellent","very good","good","fair","poor"))
+
+mosaicplot(table(general_health,obese),col="lightblue",main="",xlab="general health")
+# To analyze the relation between obesity and health
+
+```
+
+
+We can see from the mosaic plot that the proportion of people with obesity rises as we move from people with excellent health to people with poor health.
+Obesity and health has an inverse relation.

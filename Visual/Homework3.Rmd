@@ -1,0 +1,171 @@
+---
+title: "Homework 3   DSO 545 "
+author: "Rupantar Rana"
+date: "Sunday, March 01, 2015"
+output: pdf_document
+---
+
+Part 1
+
+Question 1:
+In this question, we will use the iris flower dataset which is part of R's core distribution. The iris data set
+gives the measurements in centimeters of the variables sepal length and width and petal length and width,
+respectively, for 50 flowers from each of 3 species of iris.
+1. Implement the split-apply-combine strategy using R to find the average width and length of the
+sepal and petal of the three different species of the iris flower. DON'T use plyr yet. You are doing it
+the long way, and the strategy is as follows:
+. First, we split the dataset into three subsets according to the species of the flower.
+. Next, for each subset we will compute average width and length of sepal and petal.
+. Finally, we will combine all the results to compare with each orther.
+
+
+##Spliting the data set according to the species of the flowers
+```{r}
+
+# Loading the data set and the plyr package
+
+library(plyr)
+head(iris)
+attach(iris)
+
+## splitting the data using the split commmand
+data.split<-split(iris,Species)
+
+## checking the various species
+
+contrasts(Species)
+
+```
+## Applying the mean function
+
+```{r}
+## setting the variables to NULL in order to fill them in the for loop
+avg.sepal.length=NULL
+avg.sepal.width=NULL
+avg.petal.length=NULL
+avg.petal.width=NULL
+
+for(i in 1:length(data.split)){
+        
+         avg.sepal.length[i]<-mean(data.split[[i]]$Sepal.Length)
+         avg.sepal.width[i]<-mean(data.split[[i]]$Sepal.Width)
+         avg.petal.length[i]<-mean(data.split[[i]]$Petal.Length)
+         avg.petal.width[i]<-mean(data.split[[i]]$Petal.Width)
+
+}
+
+```
+
+## Combining the averages computed so far
+
+```{r}
+averages<-matrix(nrow=length(avg.sepal.length),ncol=5)
+averages[,1]<-as.character(unique(iris$Species))
+averages[,2]<-avg.sepal.length
+averages[,3]<-avg.sepal.width
+averages[,4]<-avg.petal.length
+averages[,5]<-avg.petal.width
+
+averages<-as.data.frame(averages)
+
+colnames(averages)<-c("Species","sepal.length","sepal.width","petal.length","petal.width")
+
+averages
+
+```
+
+## 2.Applying the ddply function to the previous data set
+
+```{r}
+names(iris)
+result.dd<-ddply(iris,"Species",summarize,Sepal.Length=mean(Sepal.Length),
+                 Sepal.Width=mean(Sepal.Width),Petal.Length=mean(Petal.Length),
+                 Petal.Width=mean(Petal.Width))
+result.dd
+```
+
+
+##3. 
+Wenjie, Su, Cecilia, Evan and Amlan introduced the dplyr package at the end of their lecture.
+a. From the iris data, use filter() function to create a dataframe for iris flowers that has sepal length less than 6 cm and sepal with less than or equal to 2.7 cm.
+
+```{r}
+library(dplyr)
+flowers<-filter(iris,Sepal.Length<6 & Sepal.Width <= 2.7)
+flowers
+```
+
+b. For the dataframe you created in part (a), use the mutate() function to convert the width and length of sepal and petal from centimeter to meter.
+
+```{r}
+flowers.m=data.frame()
+flowers.m<-mutate(flowers,Sepal.Length=Sepal.Length/100,
+                  Sepal.Width=Sepal.Width/100,Petal.Length=Petal.Length/100,
+                  Petal.Width=Petal.Width/100)
+head(flowers.m)
+head(flowers)
+
+```
+
+c. Use the chaining operator %>% to combine parts (a) and (b).
+
+```{r}
+
+new.data.iris<-iris%>%
+        filter(Sepal.Length<6& Sepal.Width <= 2.7)%>%
+        mutate(Sepal.Length=Sepal.Length/100,
+               Sepal.Width=Sepal.Width/100,Petal.Length=Petal.Length/100,
+               Petal.Width=Petal.Width/100)
+new.data.iris
+```
+
+Question 2:
+
+We often need to transform data via a log or reciprocal ( 1/x ) transformation.Write a function TransformData that has two arguments:
+. x : contains the data.
+. type: is optional with 1 as a default value. type should be interpreted as follows: If type = 1,we calculate the log with base 10 of x. If type = 2, we calculate 1 / x. Otherwise, we produce a warningmessage that type must be one of the numbers 1 or 2 and the function returns a single NA.There is no need for checking the class of x. If we can't perform a calculation for a particular class (e.g., if x
+is character vector), then let R report a default error message. However, we want to control the behavior if
+we take the log of a number less than 0 or the reciprocal of 0. For the log, assign 999 if x is < 0, and for the
+reciprocal, also assign 999 if x is = 0.
+Don't laugh, but assigning 999 is a common way to mark missing values for cli- mate data. Your function
+should return a vector of the same length as x in case type is 1 or 2 (otherwise, return NA and print a
+warning).
+
+        
+```{r}
+
+TransformData<-function(x,type=1){   ## Default set to type 1
+        if(type!=1 & type !=2){
+                warning("Type should be either 1 or 2")
+                return(NA)
+        }
+        suppressWarnings(if(type==1){  
+                # Suppressing the warnings for the  commands that follow
+                logx<-(log10(x))
+                for(i in 1:length(x)){
+                        if(x[i]<=0){            # Nas are converted to 999
+                                logx[i]<-999 
+                        }
+                }
+                return(round(logx,3))
+        }else if(type==2){
+                recipx<-(1/x)
+                for(i in 1:length(x)){
+                        if(x[i]==0){
+                                recipx[i]<-999   # Nas are converted to 999
+                        }
+                }
+                return(round(recipx,3))
+        })
+   
+}
+
+TransformData(c(-1,2,3,0,22),1)
+TransformData(c(-10, 0, 10, 100, 1000))
+TransformData(c(-10, 0, 10, 100, 1000), type = 2)
+TransformData(c(-10, 0, 10, 100, 1000), type = 3) 
+
+## included the warning message for this parameter although its not there in the Q example
+
+```
+
